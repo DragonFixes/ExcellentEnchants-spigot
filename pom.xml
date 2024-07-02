@@ -38,8 +38,9 @@
             <groupId>su.nightexpress.nightcore</groupId>
             <artifactId>nightcore</artifactId>
             <version>1.0.0</version>
+            <!-- I want it to use a url to download it -->
             <scope>system</scope>
-            <systemPath>C:/OneDrive/Development/Java/Fixes/ExcellentEnchants-spigot/libs/nightcore.jar</systemPath>
+            <systemPath>${basedir}/../libs/nightcore.jar</systemPath>
         </dependency>
     </dependencies>
 
