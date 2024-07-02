@@ -6,10 +6,11 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.enchantments.EnchantmentTarget;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
-import su.nightexpress.excellentenchants.ExcellentEnchantsPlugin;
+import su.nightexpress.excellentenchants.EnchantsPlugin;
 import su.nightexpress.excellentenchants.api.enchantment.Rarity;
 import su.nightexpress.excellentenchants.api.enchantment.type.GenericEnchant;
 import su.nightexpress.excellentenchants.enchantment.data.AbstractEnchantmentData;
@@ -25,7 +26,7 @@ public class SoulboundEnchant extends AbstractEnchantmentData implements Generic
 
     public static final String ID = "soulbound";
 
-    public SoulboundEnchant(@NotNull ExcellentEnchantsPlugin plugin, @NotNull File file) {
+    public SoulboundEnchant(@NotNull EnchantsPlugin plugin, @NotNull File file) {
         super(plugin, file);
         this.setDescription("Protects from being dropped on death.");
         this.setMaxLevel(1);
@@ -44,7 +45,7 @@ public class SoulboundEnchant extends AbstractEnchantmentData implements Generic
         return EnchantmentTarget.BREAKABLE;
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onDeath(@NotNull PlayerDeathEvent deathEvent) {
         Player player = deathEvent.getEntity();
         if (!this.isAvailableToUse(player)) return;

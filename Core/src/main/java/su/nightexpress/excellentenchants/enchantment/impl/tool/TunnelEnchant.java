@@ -9,15 +9,15 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
-import su.nightexpress.excellentenchants.ExcellentEnchantsPlugin;
+import su.nightexpress.excellentenchants.EnchantsPlugin;
 import su.nightexpress.excellentenchants.api.enchantment.ItemCategory;
 import su.nightexpress.excellentenchants.api.enchantment.Rarity;
 import su.nightexpress.excellentenchants.api.enchantment.type.BlockBreakEnchant;
 import su.nightexpress.excellentenchants.enchantment.data.AbstractEnchantmentData;
 import su.nightexpress.excellentenchants.enchantment.util.EnchantUtils;
-import su.nightexpress.excellentenchants.hook.impl.NoCheatPlusHook;
 import su.nightexpress.nightcore.config.ConfigValue;
 import su.nightexpress.nightcore.config.FileConfig;
+import su.nightexpress.nightcore.util.Lists;
 
 import java.io.File;
 import java.util.HashSet;
@@ -38,7 +38,7 @@ public class TunnelEnchant extends AbstractEnchantmentData implements BlockBreak
 
     private boolean disableOnSneak;
 
-    public TunnelEnchant(@NotNull ExcellentEnchantsPlugin plugin, @NotNull File file) {
+    public TunnelEnchant(@NotNull EnchantsPlugin plugin, @NotNull File file) {
         super(plugin, file);
 
         this.setDescription("Mines multiple blocks at once in a certain shape.");
@@ -77,7 +77,7 @@ public class TunnelEnchant extends AbstractEnchantmentData implements BlockBreak
         if (block.getDrops(item).isEmpty()) return false;
 
 
-        final List<Block> lastTwoTargetBlocks = player.getLastTwoTargetBlocks(null, 10);
+        final List<Block> lastTwoTargetBlocks = player.getLastTwoTargetBlocks(Lists.newSet(Material.AIR, Material.WATER, Material.LAVA), 10);
         if (lastTwoTargetBlocks.size() != 2 || !lastTwoTargetBlocks.get(1).getType().isOccluding()) {
             return false;
         }
@@ -91,8 +91,6 @@ public class TunnelEnchant extends AbstractEnchantmentData implements BlockBreak
         if (level == 1) blocksBroken = 2;
         else if (level == 2) blocksBroken = 5;
         else if (level >= 3) blocksBroken = 9;
-
-        NoCheatPlusHook.exemptBlocks(player);
 
         for (int i = 0; i < blocksBroken; i++) {
             if (item.getType().isAir()) break;
@@ -121,8 +119,6 @@ public class TunnelEnchant extends AbstractEnchantmentData implements BlockBreak
 
             EnchantUtils.safeBusyBreak(player, blockAdd);
         }
-
-        NoCheatPlusHook.unexemptBlocks(player);
         return true;
     }
 }

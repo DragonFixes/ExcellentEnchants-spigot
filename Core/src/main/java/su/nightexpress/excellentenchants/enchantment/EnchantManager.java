@@ -3,7 +3,7 @@ package su.nightexpress.excellentenchants.enchantment;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
-import su.nightexpress.excellentenchants.ExcellentEnchantsPlugin;
+import su.nightexpress.excellentenchants.EnchantsPlugin;
 import su.nightexpress.excellentenchants.api.enchantment.EnchantmentData;
 import su.nightexpress.excellentenchants.api.enchantment.type.PassiveEnchant;
 import su.nightexpress.excellentenchants.config.Config;
@@ -11,6 +11,7 @@ import su.nightexpress.excellentenchants.enchantment.impl.armor.FlameWalkerEncha
 import su.nightexpress.excellentenchants.enchantment.listener.EnchantAnvilListener;
 import su.nightexpress.excellentenchants.enchantment.listener.EnchantGenericListener;
 import su.nightexpress.excellentenchants.enchantment.listener.EnchantPopulationListener;
+import su.nightexpress.excellentenchants.enchantment.listener.EnchantVanillaListener;
 import su.nightexpress.excellentenchants.enchantment.menu.EnchantmentsListMenu;
 import su.nightexpress.excellentenchants.enchantment.registry.EnchantRegistry;
 import su.nightexpress.excellentenchants.enchantment.util.EnchantUtils;
@@ -19,13 +20,13 @@ import su.nightexpress.nightcore.util.Pair;
 
 import java.util.*;
 
-public class EnchantManager extends AbstractManager<ExcellentEnchantsPlugin> {
+public class EnchantManager extends AbstractManager<EnchantsPlugin> {
 
     private final Set<Pair<PassiveEnchant, EnchantmentData>> passiveEnchants;
 
     private EnchantmentsListMenu enchantmentsListMenu;
 
-    public EnchantManager(@NotNull ExcellentEnchantsPlugin plugin) {
+    public EnchantManager(@NotNull EnchantsPlugin plugin) {
         super(plugin);
         this.passiveEnchants = new HashSet<>();
 
@@ -44,8 +45,12 @@ public class EnchantManager extends AbstractManager<ExcellentEnchantsPlugin> {
         this.addListener(new EnchantAnvilListener(this.plugin));
 
         if (Config.isCustomDistribution()) {
-            this.plugin.info("Using custom distribution system...");
+            this.plugin.info("Using custom distribution system. Applying patches...");
             this.addListener(new EnchantPopulationListener(this.plugin));
+        }
+        else {
+            this.plugin.info("Using vanilla distribution. Applying enchanting table patches...");
+            this.addListener(new EnchantVanillaListener(this.plugin));
         }
 
         this.addTask(this.plugin.createAsyncTask(this::displayProjectileTrails).setTicksInterval(Config.CORE_PROJECTILE_PARTICLE_INTERVAL.get()));
@@ -55,12 +60,13 @@ public class EnchantManager extends AbstractManager<ExcellentEnchantsPlugin> {
         }
     }
 
+    @Override
     protected void onShutdown() {
         if (this.enchantmentsListMenu != null) this.enchantmentsListMenu.clear();
 
-        if (EnchantRegistry.isRegistered(FlameWalkerEnchant.ID)) {
+        /*if (EnchantRegistry.isRegistered(FlameWalkerEnchant.ID)) {
             FlameWalkerEnchant.clear();
-        }
+        }*/
     }
 
     @NotNull
