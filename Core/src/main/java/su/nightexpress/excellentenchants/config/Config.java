@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import su.nightexpress.excellentenchants.api.DistributionMode;
 import su.nightexpress.excellentenchants.api.DistributionWay;
 import su.nightexpress.excellentenchants.api.enchantment.Rarity;
-import su.nightexpress.excellentenchants.hook.HookId;
+import su.nightexpress.excellentenchants.hook.HookPlugin;
 import su.nightexpress.nightcore.config.ConfigValue;
 import su.nightexpress.nightcore.config.FileConfig;
 import su.nightexpress.nightcore.util.NumberUtil;
@@ -50,6 +50,11 @@ public class Config {
         "[Enable for enhanced gameplay; Disable for performance]",
         "[Default is true]"
     );
+
+    public static final ConfigValue<Integer> CORE_ITEM_ENCHANT_LIMIT = ConfigValue.create("Core.Item_Enchantments_Limit",
+        3,
+        "Sets max. amount of custom enchantments per item.",
+        "[Default is 3]");
 
     public static final ConfigValue<Boolean> CORE_SWORD_ENCHANTS_TO_AXES = ConfigValue.create("Core.Sword_Enchants_To_Axes",
         true,
@@ -141,7 +146,7 @@ public class Config {
         "Sets how enchantment names and descriptions will be handled on items.",
         "=".repeat(15) + " AVAILABLE VALUES " + "=".repeat(15),
         "1 = Plain modification of item's lore (lore changes are real and persistent).",
-        "2 = Packet modification of item's lore (no real changes are made to the items). Requires " + HookId.PROTOCOL_LIB + " to be installed.",
+        "2 = Packet modification of item's lore (no real changes are made to the items). Requires " + HookPlugin.PROTOCOL_LIB + " to be installed.",
         "",
         "Plain mode is faster, but may not reflect all changes immediately.",
         "Packet mode is slower, but instantly reflect all changes. In creative mode, there is a chance for lore duplication."

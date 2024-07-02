@@ -11,16 +11,17 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import su.nightexpress.excellentenchants.ExcellentEnchantsPlugin;
+import su.nightexpress.excellentenchants.EnchantsPlugin;
 import su.nightexpress.excellentenchants.api.DistributionWay;
 import su.nightexpress.excellentenchants.api.Modifier;
-import su.nightexpress.excellentenchants.api.enchantment.distribution.DistributionOptions;
+import su.nightexpress.excellentenchants.api.enchantment.Cost;
 import su.nightexpress.excellentenchants.api.enchantment.EnchantmentData;
 import su.nightexpress.excellentenchants.api.enchantment.ItemCategory;
 import su.nightexpress.excellentenchants.api.enchantment.Rarity;
 import su.nightexpress.excellentenchants.api.enchantment.data.ChanceData;
 import su.nightexpress.excellentenchants.api.enchantment.data.PeriodicData;
 import su.nightexpress.excellentenchants.api.enchantment.data.PotionData;
+import su.nightexpress.excellentenchants.api.enchantment.distribution.DistributionOptions;
 import su.nightexpress.excellentenchants.config.Config;
 import su.nightexpress.excellentenchants.enchantment.util.EnchantPlaceholders;
 import su.nightexpress.excellentenchants.enchantment.util.EnchantUtils;
@@ -44,7 +45,7 @@ import java.util.stream.Stream;
 
 import static su.nightexpress.excellentenchants.Placeholders.*;
 
-public abstract class AbstractEnchantmentData extends AbstractFileData<ExcellentEnchantsPlugin> implements EnchantmentData {
+public abstract class AbstractEnchantmentData extends AbstractFileData<EnchantsPlugin> implements EnchantmentData {
 
     protected Enchantment enchantment;
 
@@ -56,13 +57,11 @@ public abstract class AbstractEnchantmentData extends AbstractFileData<Excellent
     private boolean treasure;
     private boolean visualEffects;
 
-    private int minLevel;
     private int maxLevel;
-    //private int maxMergeLevel;
 
-    private Modifier minCost;
-    private Modifier maxCost;
-    //private Modifier anvilMergeCost;
+    private Cost minCost;
+    private Cost maxCost;
+    private int anvilCost;
 
     private boolean   chargesEnabled;
     private boolean   chargesCustomFuel;
@@ -76,11 +75,10 @@ public abstract class AbstractEnchantmentData extends AbstractFileData<Excellent
     private final NamespacedKey       chargesKey;
     private final EnchantPlaceholders placeholders;
 
-    public AbstractEnchantmentData(@NotNull ExcellentEnchantsPlugin plugin, @NotNull File file) {
+    public AbstractEnchantmentData(@NotNull EnchantsPlugin plugin, @NotNull File file) {
         super(plugin, file);
         this.setDescription(new ArrayList<>());
         this.setRarity(Rarity.COMMON);
-        this.setStartLevel(1);
         this.setMaxLevel(3);
 
         this.conflicts = new HashSet<>();
@@ -110,8 +108,11 @@ public abstract class AbstractEnchantmentData extends AbstractFileData<Excellent
     protected boolean onLoad(@NotNull FileConfig cfg) {
         this.setRarity(ConfigValue.create("Settings.Rarity", Rarity.class, this.rarity,
             "The rarity is an attribute of an enchantment.",
-                "It affects the chance of getting an enchantment from enchanting or loots as well as the combination cost in anvil."
+                "It affects the chance of getting an enchantment from enchanting or loots as well as the combination cost in anvil.",
+            "[*] Only for versions BELOW 1.20.6!"
         ).read(cfg));
+
+        // TODO Custom rarity class for 1.21
 
         this.setDisplayName(ConfigValue.create("Settings.Name",
             StringUtil.capitalizeUnderscored(this.getId()),
@@ -122,11 +123,6 @@ public abstract class AbstractEnchantmentData extends AbstractFileData<Excellent
             this.getDescription(),
             "Enchantment description.",
             "You can use 'Enchantment' placeholders: " + URL_PLACEHOLDERS
-        ).read(cfg));
-
-        this.setStartLevel(ConfigValue.create("Settings.Level.Min",
-            this.getMinLevel(),
-            "Min. enchantment level."
         ).read(cfg));
 
         this.setMaxLevel(ConfigValue.create("Settings.Level.Max",
@@ -159,21 +155,24 @@ public abstract class AbstractEnchantmentData extends AbstractFileData<Excellent
         ).read(cfg));
 
         //int costAdjust = Math.max(7, 42 - this.getMaxLevel() * 7);
-        double costBase = Config.isVanillaDistribution() ? 45D : 30D;
-        double costAdjust = costBase / this.getMaxLevel();
+        int costBase = Config.isVanillaDistribution() ? 45 : 30;
+        int costStart = Rnd.get(5) + 1;
+        int costMod = Rnd.get(10) + 1;
+        int costPerLevel = (int) ((double) costBase / (double) this.getMaxLevel());
 
-        this.setMinCost(Modifier.read(cfg, "Distribution." + DistributionWay.ENCHANTING.getPathName() + ".Min_Cost",
-            Modifier.add(1 - costAdjust, costAdjust, 1),
+        this.setMinCost(Cost.read(cfg, "Distribution." + DistributionWay.ENCHANTING.getPathName() + ".Cost.Min",
+            new Cost(costStart, costPerLevel),
             VANILLA_DISTRIBUTION_HEADER,
             "Sets min. **modified** level cost for this enchantment to be selected in enchanting table.",
             "Explanation: https://minecraft.wiki/w/Enchanting_mechanics#How_enchantments_are_chosen",
             "Vanilla costs: https://minecraft.wiki/w/Enchanting/Levels",
             CUSTOM_DISTRIBUTION_HEADER,
-            "Sets min. **plain** level cost for this enchantment to be selected in enchanting table.")
+            "Sets min. **plain** level cost for this enchantment to be selected in enchanting table."
+            )
         );
 
-        this.setMaxCost(Modifier.read(cfg, "Distribution." + DistributionWay.ENCHANTING.getPathName() + ".Max_Cost",
-            Modifier.add(12 - costAdjust, costAdjust, 1),
+        this.setMaxCost(Cost.read(cfg, "Distribution." + DistributionWay.ENCHANTING.getPathName() + ".Cost.Max",
+            new Cost(costStart * costMod, costPerLevel),
             VANILLA_DISTRIBUTION_HEADER,
             "Sets max. **modified** level cost for this enchantment to be selected in enchanting table.",
             "Explanation: https://minecraft.wiki/w/Enchanting_mechanics#How_enchantments_are_chosen",
@@ -181,6 +180,13 @@ public abstract class AbstractEnchantmentData extends AbstractFileData<Excellent
             CUSTOM_DISTRIBUTION_HEADER,
             "Sets max. **plain** level cost for this enchantment to be selected in enchanting table.")
         );
+
+        // TODO Check what actually does
+        this.setAnvilCost(ConfigValue.create("Anvil.Cost",
+            Rnd.get(8) + 1,
+            "Sets enchantment anvil cost.",
+            "[*] Works for 1.20.6+ only!"
+        ).read(cfg));
 
         this.distributionOptions.load(cfg);
 
@@ -241,7 +247,7 @@ public abstract class AbstractEnchantmentData extends AbstractFileData<Excellent
             .add(ENCHANTMENT_DESCRIPTION_FORMATTED, () -> String.join("\n", this.getDescriptionFormatted()))
             .add(ENCHANTMENT_DESCRIPTION_REPLACED, level -> String.join("\n", this.getDescriptionReplaced(level)))
             .add(ENCHANTMENT_LEVEL, NumberUtil::toRoman)
-            .add(ENCHANTMENT_LEVEL_MIN, () -> String.valueOf(this.getMinLevel()))
+            .add(ENCHANTMENT_LEVEL_MIN, () -> String.valueOf(1))
             .add(ENCHANTMENT_LEVEL_MAX, () -> String.valueOf(this.getMaxLevel()))
             .add(ENCHANTMENT_RARITY, () -> plugin.getLangManager().getEnum(this.getRarity()))
             .add(ENCHANTMENT_FIT_ITEM_TYPES, () -> {
@@ -326,7 +332,7 @@ public abstract class AbstractEnchantmentData extends AbstractFileData<Excellent
             case ARMOR_FEET -> new EquipmentSlot[]{EquipmentSlot.FEET};
             case ARMOR, WEARABLE -> new EquipmentSlot[]{EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
             case BREAKABLE -> new EquipmentSlot[]{EquipmentSlot.HAND, EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
-            case VANISHABLE -> EquipmentSlot.values();
+            case VANISHABLE -> EnchantUtils.EQUIPMENT_SLOTS;
             default -> throw new IllegalStateException("Unexpected value: " + this.getCategory());
         };
     }
@@ -340,6 +346,16 @@ public abstract class AbstractEnchantmentData extends AbstractFileData<Excellent
     @Override
     public boolean isAvailableToUse(@NotNull LivingEntity entity) {
         return this.isAvailableToUse(entity.getWorld());
+    }
+
+    @Override
+    public boolean checkEnchantLimit(@NotNull ItemStack item) {
+        // Allow to re-enchant item with the same enchantment.
+        if (EnchantUtils.contains(item, this.getEnchantment())) {
+            return true;
+        }
+
+        return !EnchantUtils.hasMaximumEnchants(item);
     }
 
     @Override
@@ -360,14 +376,11 @@ public abstract class AbstractEnchantmentData extends AbstractFileData<Excellent
 
     @Override
     public boolean checkItemCategory(@NotNull ItemStack item) {
-        ItemCategory[] itemCategories = this.getItemCategories();
-        if (itemCategories.length == 0) return false;
-
-        return Stream.of(itemCategories).anyMatch(itemCategory -> itemCategory.isIncluded(item));
+        return !this.hasItemCategory() || Stream.of(this.getItemCategories()).anyMatch(itemCategory -> itemCategory.isIncluded(item));
     }
 
     public int generateLevel() {
-        return Rnd.get(this.getMinLevel(), this.getMaxLevel());
+        return Rnd.get(1, this.getMaxLevel());
     }
 
     @Override
@@ -417,12 +430,12 @@ public abstract class AbstractEnchantmentData extends AbstractFileData<Excellent
 
     @Override
     public int getMinCost(int level) {
-        return this.getMinCost().getIntValue(level);
+        return this.getMinCost().calculate(level);
     }
 
     @Override
     public int getMaxCost(int level) {
-        return this.getMaxCost().getIntValue(level);
+        return this.getMaxCost().calculate(level);
     }
 
     /*@Override
@@ -585,16 +598,6 @@ public abstract class AbstractEnchantmentData extends AbstractFileData<Excellent
     }
 
     @Override
-    public void setStartLevel(int levelMin) {
-        this.minLevel = Math.max(1, levelMin);
-    }
-
-    @Override
-    public int getMinLevel() {
-        return this.minLevel;
-    }
-
-    @Override
     public void setMaxLevel(int levelMax) {
         this.maxLevel = Math.max(1, levelMax);
     }
@@ -606,24 +609,34 @@ public abstract class AbstractEnchantmentData extends AbstractFileData<Excellent
 
     @Override
     @NotNull
-    public Modifier getMinCost() {
+    public Cost getMinCost() {
         return this.minCost;
     }
 
     @Override
-    public void setMinCost(@NotNull Modifier minCost) {
+    public void setMinCost(@NotNull Cost minCost) {
         this.minCost = minCost;
     }
 
     @Override
     @NotNull
-    public Modifier getMaxCost() {
+    public Cost getMaxCost() {
         return this.maxCost;
     }
 
     @Override
-    public void setMaxCost(@NotNull Modifier maxCost) {
+    public void setMaxCost(@NotNull Cost maxCost) {
         this.maxCost = maxCost;
+    }
+
+    @Override
+    public int getAnvilCost() {
+        return anvilCost;
+    }
+
+    @Override
+    public void setAnvilCost(int anvilCost) {
+        this.anvilCost = anvilCost;
     }
 
     /*@Override

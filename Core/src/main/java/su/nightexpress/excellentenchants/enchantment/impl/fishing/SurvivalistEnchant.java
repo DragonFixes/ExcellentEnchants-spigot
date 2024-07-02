@@ -7,7 +7,7 @@ import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.inventory.CookingRecipe;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
-import su.nightexpress.excellentenchants.ExcellentEnchantsPlugin;
+import su.nightexpress.excellentenchants.EnchantsPlugin;
 import su.nightexpress.excellentenchants.api.enchantment.Rarity;
 import su.nightexpress.excellentenchants.api.enchantment.data.ChanceData;
 import su.nightexpress.excellentenchants.api.enchantment.data.ChanceSettings;
@@ -28,7 +28,7 @@ public class SurvivalistEnchant extends AbstractEnchantmentData implements Fishi
 
     private ChanceSettingsImpl chanceSettings;
 
-    public SurvivalistEnchant(@NotNull ExcellentEnchantsPlugin plugin, @NotNull File file) {
+    public SurvivalistEnchant(@NotNull EnchantsPlugin plugin, @NotNull File file) {
         super(plugin, file);
         this.setDescription("Automatically cooks fish if what is caught is raw.");
         this.setMaxLevel(1);
@@ -41,12 +41,16 @@ public class SurvivalistEnchant extends AbstractEnchantmentData implements Fishi
     protected void loadAdditional(@NotNull FileConfig config) {
         this.chanceSettings = ChanceSettingsImpl.create(config);
 
-        this.cookingRecipes.clear();
         this.plugin.getServer().recipeIterator().forEachRemaining(recipe -> {
             if (recipe instanceof CookingRecipe<?> cookingRecipe && cookingRecipe.getInput().getType().isItem()) {
                 this.cookingRecipes.add(cookingRecipe);
             }
         });
+    }
+
+    @Override
+    public void clear() {
+        this.cookingRecipes.clear();
     }
 
     @NotNull

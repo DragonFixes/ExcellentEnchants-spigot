@@ -11,7 +11,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
-import su.nightexpress.excellentenchants.ExcellentEnchantsPlugin;
+import su.nightexpress.excellentenchants.EnchantsPlugin;
 import su.nightexpress.excellentenchants.api.Modifier;
 import su.nightexpress.excellentenchants.api.enchantment.Rarity;
 import su.nightexpress.excellentenchants.api.enchantment.data.ChanceData;
@@ -24,6 +24,7 @@ import su.nightexpress.excellentenchants.enchantment.data.ChanceSettingsImpl;
 import su.nightexpress.excellentenchants.enchantment.data.PotionSettingsImpl;
 import su.nightexpress.nightcore.config.FileConfig;
 import su.nightexpress.nightcore.util.BukkitThing;
+import su.nightexpress.nightcore.util.Version;
 import su.nightexpress.nightcore.util.random.Rnd;
 import su.nightexpress.nightcore.util.wrapper.UniParticle;
 
@@ -38,11 +39,20 @@ public class SurpriseEnchant extends AbstractEnchantmentData implements ChanceDa
     private ChanceSettingsImpl chanceSettings;
     private PotionSettingsImpl potionSettings;
 
-    public SurpriseEnchant(@NotNull ExcellentEnchantsPlugin plugin, @NotNull File file) {
+    public SurpriseEnchant(@NotNull EnchantsPlugin plugin, @NotNull File file) {
         super(plugin, file);
         this.setDescription(ENCHANTMENT_CHANCE + "% chance to apply random potion effect to enemy on hit.");
         this.setMaxLevel(3);
         this.setRarity(Rarity.RARE);
+    }
+
+    @Override
+    public boolean checkServerRequirements() {
+        if (Version.isBehind(Version.V1_20_R2)) {
+            this.error("Enchantment is available for 1.20.2+ only.");
+            return false;
+        }
+        return true;
     }
 
     @Override

@@ -2,9 +2,9 @@ package su.nightexpress.excellentenchants;
 
 public class Placeholders extends su.nightexpress.nightcore.util.Placeholders {
 
-    public static final String URL_WIKI         = "https://github.com/nulli0n/ExcellentEnchants-spigot/wiki/";
-    public static final String URL_PLACEHOLDERS = "https://github.com/nulli0n/ExcellentEnchants-spigot/wiki/Internal-Placeholders";
-    public static final String URL_CHRAGES      = "https://github.com/nulli0n/ExcellentEnchants-spigot/wiki/Charges-System";
+    public static final String URL_WIKI         = "https://nightexpress.gitbook.io/excellentenchants";
+    public static final String URL_PLACEHOLDERS = "https://nightexpress.gitbook.io/excellentenchants/utility/placeholders";
+    public static final String URL_CHRAGES      = "https://nightexpress.gitbook.io/excellentenchants/features/charges";
 
     public static final String VANILLA_DISTRIBUTION_NAME = "Vanilla Distribution Mode";
     public static final String CUSTOM_DISTRIBUTION_NAME  = "Custom Distribution Mode";
@@ -17,14 +17,15 @@ public class Placeholders extends su.nightexpress.nightcore.util.Placeholders {
     public static final String GENERIC_ITEM        = "%item%";
     public static final String GENERIC_LEVEL       = "%level%";
     public static final String GENERIC_AMOUNT      = "%amount%";
+    public static final String GENERIC_MODIFIER = "%modifier%";
     public static final String GENERIC_DESCRIPTION = "%description%";
     public static final String GENERIC_ENCHANT     = "%enchant%";
-    public static final String GENERIC_RADIUS = "%radius%";
-    public static final String GENERIC_DURATION = "%duration%";
-    public static final String GENERIC_DAMAGE = "%damage%";
-    public static final String GENERIC_MIN = "%min%";
-    public static final String GENERIC_MAX = "%max%";
-    public static final String GENERIC_TIME = "%time%";
+    public static final String GENERIC_RADIUS      = "%radius%";
+    public static final String GENERIC_DURATION    = "%duration%";
+    public static final String GENERIC_DAMAGE      = "%damage%";
+    public static final String GENERIC_MIN         = "%min%";
+    public static final String GENERIC_MAX         = "%max%";
+    public static final String GENERIC_TIME        = "%time%";
 
     public static final String ENCHANTMENT_CHANCE                        = "%enchantment_trigger_chance%";
     public static final String ENCHANTMENT_INTERVAL                      = "%enchantment_trigger_interval%";

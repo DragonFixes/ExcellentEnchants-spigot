@@ -10,7 +10,7 @@ import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import su.nightexpress.excellentenchants.ExcellentEnchantsPlugin;
+import su.nightexpress.excellentenchants.EnchantsPlugin;
 import su.nightexpress.excellentenchants.api.enchantment.EnchantmentData;
 import su.nightexpress.excellentenchants.api.enchantment.Rarity;
 import su.nightexpress.excellentenchants.api.enchantment.type.*;
@@ -29,14 +29,13 @@ import su.nightexpress.excellentenchants.enchantment.registry.wrapper.WrappedEve
 import su.nightexpress.nightcore.manager.SimpleManager;
 import su.nightexpress.nightcore.util.BukkitThing;
 import su.nightexpress.nightcore.util.FileUtil;
-import su.nightexpress.nightcore.util.Version;
 
 import java.io.File;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class EnchantRegistry extends SimpleManager<ExcellentEnchantsPlugin> {
+public class EnchantRegistry extends SimpleManager<EnchantsPlugin> {
 
     public static final Map<NamespacedKey, EnchantmentData> BY_KEY = new HashMap<>();
     public static final Map<String, EnchantmentData>        BY_ID  = new HashMap<>();
@@ -45,7 +44,7 @@ public class EnchantRegistry extends SimpleManager<ExcellentEnchantsPlugin> {
 
     private boolean isLocked;
 
-    public EnchantRegistry(@NotNull ExcellentEnchantsPlugin plugin) {
+    public EnchantRegistry(@NotNull EnchantsPlugin plugin) {
         super(plugin);
     }
 
@@ -69,7 +68,10 @@ public class EnchantRegistry extends SimpleManager<ExcellentEnchantsPlugin> {
 
         // Prevent to register enchantments during the runtime.
         if (this.isLocked) {
-            BY_ID.values().forEach(this::load);
+            getRegistered().forEach(data -> {
+                data.clear();
+                this.load(data);
+            });
             return;
         }
 
@@ -104,7 +106,7 @@ public class EnchantRegistry extends SimpleManager<ExcellentEnchantsPlugin> {
         this.register(ConfusionEnchant.ID, file -> new ConfusionEnchant(plugin, file));
         this.register(CutterEnchant.ID, file -> new CutterEnchant(plugin, file));
         this.register(CurseOfDeathEnchant.ID, file -> new CurseOfDeathEnchant(plugin, file));
-        this.register(EnchantDecapitator.ID, file -> new EnchantDecapitator(plugin, file));
+        this.register(DecapitatorEnchant.ID, file -> new DecapitatorEnchant(plugin, file));
         this.register(DoubleStrikeEnchant.ID, file -> new DoubleStrikeEnchant(plugin, file));
         this.register(ExhaustEnchant.ID, file -> new ExhaustEnchant(plugin, file));
         this.register(WisdomEnchant.ID, file -> new WisdomEnchant(plugin, file));
@@ -156,10 +158,8 @@ public class EnchantRegistry extends SimpleManager<ExcellentEnchantsPlugin> {
         this.register(PoisonedArrowsEnchant.ID, file -> new PoisonedArrowsEnchant(plugin, file));
         this.register(VampiricArrowsEnchant.ID, file -> new VampiricArrowsEnchant(plugin, file));
         this.register(WitheredArrowsEnchant.ID, file -> new WitheredArrowsEnchant(plugin, file));
-        if (Version.isAbove(Version.V1_18_R2)) {
-            this.register(DarknessArrowsEnchant.ID, file -> new DarknessArrowsEnchant(plugin, file));
-            this.register(DarknessCloakEnchant.ID, file -> new DarknessCloakEnchant(plugin, file));
-        }
+        this.register(DarknessArrowsEnchant.ID, file -> new DarknessArrowsEnchant(plugin, file));
+        this.register(DarknessCloakEnchant.ID, file -> new DarknessCloakEnchant(plugin, file));
 
         // Universal
         this.register(CurseOfFragilityEnchant.ID, file -> new CurseOfFragilityEnchant(plugin, file));
@@ -168,13 +168,14 @@ public class EnchantRegistry extends SimpleManager<ExcellentEnchantsPlugin> {
         this.register(RestoreEnchant.ID, file -> new RestoreEnchant(plugin, file));
 
         this.plugin.getEnchantNMS().freezeRegistry();
-        this.plugin.info("Enchantments Registered: " + EnchantRegistry.getRegistered().size());
+        this.plugin.info("Enchantments Registered: " + BY_ID.size());
         this.isLocked = true;
     }
 
     @Override
     protected void onShutdown() {
         if (!isLocked) {
+            getRegistered().forEach(EnchantmentData::clear);
             ENCHANTS_MAP.clear();
         }
     }
@@ -234,8 +235,8 @@ public class EnchantRegistry extends SimpleManager<ExcellentEnchantsPlugin> {
         this.plugin.info("Registered enchantment: " + enchantmentData.getId());
     }
 
-    private void load(@NotNull EnchantmentData enchant) {
-        enchant.load();
+    private void load(@NotNull EnchantmentData enchantmentData) {
+        enchantmentData.load();
     }
 
     @NotNull
@@ -281,6 +282,6 @@ public class EnchantRegistry extends SimpleManager<ExcellentEnchantsPlugin> {
 
     @NotNull
     public static Collection<EnchantmentData> getRegistered() {
-        return BY_ID.values();
+        return new HashSet<>(BY_ID.values());
     }
 }
